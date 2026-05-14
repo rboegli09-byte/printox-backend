@@ -72,7 +72,7 @@ app.get('/', (req, res) => {
 // Checkout Session
 app.post('/create-checkout-session', async (req, res) => {
   try {
-    const { cart, address, customerName, customerEmail, userDiscount, successUrl, cancelUrl } = req.body;
+    const { cart, address, customerName, customerEmail, userDiscount, delivery, successUrl, cancelUrl } = req.body;
 
     if (!cart || !cart.length) {
       return res.status(400).json({ error: 'Warenkorb ist leer' });
@@ -84,9 +84,10 @@ app.post('/create-checkout-session', async (req, res) => {
       return sum + unitPrice * item.qty;
     }, 0);
 
-    const shipping = subtotal >= 100
+    const isPickup = delivery === 'pickup';
+    const shipping = isPickup ? 0 : (subtotal >= 100
       ? 0
-      : cart.reduce((sum, item) => sum + (item.shipping || 7.90) * item.qty, 0);
+      : cart.reduce((sum, item) => sum + (item.shipping || 7.90) * item.qty, 0));
 
     const discountAmount = userDiscount > 0 ? subtotal * userDiscount : 0;
 
@@ -110,8 +111,17 @@ app.post('/create-checkout-session', async (req, res) => {
       });
     });
 
-    // Versand (0 = gratis)
-    if (shipping > 0) {
+    // Versand
+    if (isPickup) {
+      lineItems.push({
+        price_data: {
+          currency: 'chf',
+          product_data: { name: '🏪 Selbstabholung (Gratis)' },
+          unit_amount: 0,
+        },
+        quantity: 1,
+      });
+    } else if (shipping > 0) {
       lineItems.push({
         price_data: {
           currency: 'chf',

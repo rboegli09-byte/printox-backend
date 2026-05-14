@@ -85,9 +85,9 @@ app.post('/create-checkout-session', async (req, res) => {
     }, 0);
 
     const isPickup = delivery === 'pickup';
-    const shipping = isPickup ? 0 : (subtotal >= 100
-      ? 0
-      : cart.reduce((sum, item) => sum + (item.shipping || 7.90) * item.qty, 0));
+    // Nur einmal Versand berechnen (höchster Versandpreis)
+    const maxShipping = cart.reduce((max, item) => Math.max(max, item.shipping || 7.90), 0);
+    const shipping = isPickup ? 0 : (subtotal >= 100 ? 0 : maxShipping);
 
     const discountAmount = userDiscount > 0 ? subtotal * userDiscount : 0;
 

@@ -131,12 +131,8 @@ app.post('/create-checkout-session', async (req, res) => {
       });
     }
 
-    // Zahlungsmethoden
+    // Zahlungsmethoden (TWINT wird automatisch hinzugefügt sobald genehmigt)
     const paymentMethods = ['card'];
-    // TWINT nur wenn genehmigt (Schweiz)
-    try {
-      paymentMethods.push('twint');
-    } catch(e) {}
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: paymentMethods,
